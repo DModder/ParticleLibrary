@@ -16,7 +16,7 @@ namespace ParticleLibrary
             //Keeping the plugin alive and looping
             while (true)
             {
-
+                
             }
         }
     }
