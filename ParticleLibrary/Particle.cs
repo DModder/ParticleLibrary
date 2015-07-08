@@ -34,6 +34,7 @@ namespace ParticleLibrary
             //Request ptfx asset
             NativeFunction.CallByHash((ulong)Hashes.REQUEST_NAMED_PTFX_ASSET, null, ptfxAsset);
 
+
         }
 
        
