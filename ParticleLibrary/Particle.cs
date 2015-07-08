@@ -25,14 +25,20 @@ namespace ParticleLibrary
          * Array of dictionaries for holding asset and particle pair. 
          * Use a value from 'PTFXParticleNonLooped', as index for this array, to get the '{ASSET , PARTICLE}' pair.  
          */
-        private Dictionary<string, string>[] PTFXNonLoopedDictionaries = new Dictionary<string, string>[]{
+        private static Dictionary<string, string>[] PTFXNonLoopedDictionaries = new Dictionary<string, string>[]{
             new Dictionary<string, string>(){{"scr_paletoscore","scr_paleto_doorway_smoke"}} //Smoke1 Dictionary, format: '{ASSET , PARTICLE}'
         };
 
-        public Particle(string ptfxAsset)
+        //More userfriendly way to find known ptfx
+        public Particle(PTFXParticleNonLooped nonLoopedPTFX)
+           : this(PTFXNonLoopedDictionaries[(int)nonLoopedPTFX].Keys.ToArray<string>()[0],
+                  PTFXNonLoopedDictionaries[(int)nonLoopedPTFX].Values.ToArray<string>()[0]){}
+        
+
+        public Particle(string ptfxAssetName, string ptfxParticleName)
         {
             //Request ptfx asset
-            NativeFunction.CallByHash((ulong)Hashes.REQUEST_NAMED_PTFX_ASSET, null, ptfxAsset);
+            NativeFunction.CallByHash((ulong)Hashes.REQUEST_NAMED_PTFX_ASSET, null, ptfxAssetName);
 
 
         }
