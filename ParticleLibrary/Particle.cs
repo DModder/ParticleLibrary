@@ -14,7 +14,7 @@ namespace ParticleLibrary
     public class Particle
     {
         //Hash codes for various functions
-       private enum Hashes {
+       private enum Hashes : ulong {
             REQUEST_NAMED_PTFX_ASSET = 0xB80D8756B4668AB6,
             HAS_NAMED_PTFX_ASSET_LOADED = 0x8702416E512EC454,
             _SET_PTFX_ASSET_NEXT_CALL = 0x6C38AF3693A69A91,
@@ -29,7 +29,10 @@ namespace ParticleLibrary
             new Dictionary<string, string>(){{"scr_paletoscore","scr_paleto_doorway_smoke"}} //Smoke1 Dictionary, format: '{ASSET , PARTICLE}'
         };
 
+        /// <summary>Whereever</summary>
+        private bool looped; 
 
+        
 
 
         /*
@@ -55,7 +58,7 @@ namespace ParticleLibrary
         /// <param name="position">The position you want the particle effect to spawn</param>
         /// <param name="rotation">The rotating of the particle effect</param>
         /// <param name="scale">Sets the size of the particle effect</param>
-        public Particle(PTFXParticleNonLooped nonLoopedPTFX, Ped character, Vector3 rotation, float scale)
+       public Particle(PTFXParticleNonLooped nonLoopedPTFX, Ped character, Vector3 rotation, float scale)
             : this(PTFXNonLoopedDictionaries[(int)nonLoopedPTFX].Keys.ToArray<string>()[0],
                    PTFXNonLoopedDictionaries[(int)nonLoopedPTFX].Values.ToArray<string>()[0],
                    character, Vector3.Zero, rotation, scale) { }
@@ -80,8 +83,13 @@ namespace ParticleLibrary
         /// <param name="scale">Sets the size of the particle effect</param>
         public Particle(string ptfxAssetName, string ptfxParticleName, Ped character, Vector3 offset, Vector3 rotation, float scale)
         {
-            //Request ptfx asset
-            NativeFunction.CallByHash((ulong)Hashes.REQUEST_NAMED_PTFX_ASSET, null, ptfxAssetName);
+            //Setting up properties
+            this.looped = false;
+
+            //Preparing the Asset...
+            if (!PreparingAsset(ptfxAssetName)) { return; }
+
+            //Everything went OK. Procceding...
 
 
         }
@@ -121,12 +129,81 @@ namespace ParticleLibrary
         /// <param name="scale">Sets the size of the particle effect</param>
         public Particle(string ptfxAssetName, string ptfxParticleName, Vector3 position, Vector3 rotation, float scale)
         {
-            //Request ptfx asset
+            //Preparing the Asset...
+            if (!PreparingAsset(ptfxAssetName)) { return; }
+
+            //Everything went OK. Procceding...
+            //Set the PTFX asset to ready, and spawn the particle
+            NativeFunction.CallByHash((ulong)Hashes._SET_PTFX_ASSET_NEXT_CALL, null, ptfxAssetName);
+            bool success = NativeFunction.CallByHash<bool>((ulong)Hashes.START_PARTICLE_FX_NON_LOOPED_AT_COORD, ptfxParticleName, position.X, position.Y, position.Z, rotation.X, rotation.Y, rotation.Z, scale, 0, 0, 0);
+            
+            if (success)
+            {
+                Game.Console.Print("PL: Successfully spawned a particle effect.");
+            }
+            else
+            {
+                Game.Console.Print("PL: Something went wrong, particle effect not spawned.");
+            }
+            
+        }
+
+
+
+
+        /*
+         * MARK: - Custom functions
+         */
+
+        private bool PreparingAsset(string ptfxAssetName)
+        {
+            //Request PTFX asset
             NativeFunction.CallByHash((ulong)Hashes.REQUEST_NAMED_PTFX_ASSET, null, ptfxAssetName);
 
+            //Checking if PTFX asset is loaded
+            if (!IsPTFXAssetLoaded(ptfxAssetName))
+            {
+                //PTFX is not found so sleep for 25ms, and try again
+                GameFiber.Wait(25);
 
+                if (!IsPTFXAssetLoaded(ptfxAssetName))
+                {
+                    Game.Console.Print("PL: PTFX asset could not be found.");
+                    return false;
+                }
+            }
+            Game.Console.Print("PL: PTFX asset found and loaded.");
+            return true;
+        }
+
+        private bool IsPTFXAssetLoaded(string ptfxAssetName)
+        {
+            if(NativeFunction.CallByHash<bool>((ulong)Hashes.HAS_NAMED_PTFX_ASSET_LOADED, ptfxAssetName)){
+                return true;
+            }
+            return false;
+        }
+
+
+        public void StopLooping()
+        {
+            if (looped)
+            {
+
+            }
+            else
+            {
+                throw new ParticleNotLoopedException();
+            }
         }
 
        
+    }
+
+    // Custom exceptions
+    
+    public class ParticleNotLoopedException : Exception
+    {
+        public ParticleNotLoopedException(){}
     }
 }
