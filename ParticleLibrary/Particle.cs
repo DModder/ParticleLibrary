@@ -18,7 +18,8 @@ namespace ParticleLibrary
             REQUEST_NAMED_PTFX_ASSET = 0xB80D8756B4668AB6,
             HAS_NAMED_PTFX_ASSET_LOADED = 0x8702416E512EC454,
             _SET_PTFX_ASSET_NEXT_CALL = 0x6C38AF3693A69A91,
-            START_PARTICLE_FX_NON_LOOPED_AT_COORD = 0x25129531F77B9ED3
+            START_PARTICLE_FX_NON_LOOPED_AT_COORD = 0x25129531F77B9ED3,
+            START_PARTICLE_FX_NON_LOOPED_ON_ENTITY = 0x0D53A3B8DA0809D2
         };
 
         /*
@@ -83,6 +84,8 @@ namespace ParticleLibrary
         /// <param name="scale">Sets the size of the particle effect</param>
         public Particle(string ptfxAssetName, string ptfxParticleName, Ped character, Vector3 offset, Vector3 rotation, float scale)
         {
+            Game.Console.Print("Asset: -" + ptfxAssetName + "-");
+            Game.Console.Print("PTFX: -" + ptfxParticleName + "-");
             //Setting up properties
             this.looped = false;
 
@@ -90,7 +93,20 @@ namespace ParticleLibrary
             if (!PreparingAsset(ptfxAssetName)) { return; }
 
             //Everything went OK. Procceding...
+            //Set the PTFX asset to ready, and spawn the particle
+            //NativeFunction.CallByHash((ulong)Hashes._SET_PTFX_ASSET_NEXT_CALL, null, ptfxAssetName);
+            NativeFunction.Natives.x6C38AF3693A69A91(ptfxAssetName);
+            bool success = /*NativeFunction.CallByHash<bool>((ulong)Hashes.START_PARTICLE_FX_NON_LOOPED_ON_ENTITY, ptfxParticleName, Game.LocalPlayer.Character, offset.X, offset.Y, offset.Z, rotation.X, rotation.Y, rotation.Z, scale, false, false);*/
+                NativeFunction.Natives.x0D53A3B8DA0809D2<bool>(ptfxParticleName, Game.LocalPlayer.Character, offset.X, offset.Y, offset.Z, rotation.X, rotation.Y, rotation.Z, scale, false, false);
 
+            if (success)
+            {
+                Game.Console.Print("PL: Successfully spawned a particle effect.");
+            }
+            else
+            {
+                Game.Console.Print("PL: Something went wrong, particle effect not spawned.");
+            }
 
         }
 
@@ -134,8 +150,10 @@ namespace ParticleLibrary
 
             //Everything went OK. Procceding...
             //Set the PTFX asset to ready, and spawn the particle
-            NativeFunction.CallByHash((ulong)Hashes._SET_PTFX_ASSET_NEXT_CALL, null, ptfxAssetName);
-            bool success = NativeFunction.CallByHash<bool>((ulong)Hashes.START_PARTICLE_FX_NON_LOOPED_AT_COORD, ptfxParticleName, position.X, position.Y, position.Z, rotation.X, rotation.Y, rotation.Z, scale, 0, 0, 0);
+            //NativeFunction.CallByHash((ulong)Hashes._SET_PTFX_ASSET_NEXT_CALL, null, ptfxAssetName);
+            NativeFunction.Natives.x6C38AF3693A69A91(ptfxAssetName);
+            bool success = /*NativeFunction.CallByHash<bool>((ulong)Hashes.START_PARTICLE_FX_NON_LOOPED_AT_COORD, ptfxParticleName, position.X, position.Y, position.Z, rotation.X, rotation.Y, rotation.Z, scale, 0, 0, 0);*/
+                NativeFunction.Natives.x25129531F77B9ED3<bool>(ptfxParticleName, position.X, position.Y, position.Z, rotation.X, rotation.Y, rotation.Z, scale, false, false, false);
             
             if (success)
             {
@@ -158,7 +176,15 @@ namespace ParticleLibrary
         private bool PreparingAsset(string ptfxAssetName)
         {
             //Request PTFX asset
-            NativeFunction.CallByHash((ulong)Hashes.REQUEST_NAMED_PTFX_ASSET, null, ptfxAssetName);
+            //NativeFunction.CallByHash((ulong)Hashes.REQUEST_NAMED_PTFX_ASSET, ptfxAssetName);
+            
+           
+            NativeFunction.Natives.xB80D8756B4668AB6(ptfxAssetName);
+           
+       
+
+            
+           
 
             //Checking if PTFX asset is loaded
             if (!IsPTFXAssetLoaded(ptfxAssetName))
@@ -178,32 +204,25 @@ namespace ParticleLibrary
 
         private bool IsPTFXAssetLoaded(string ptfxAssetName)
         {
-            if(NativeFunction.CallByHash<bool>((ulong)Hashes.HAS_NAMED_PTFX_ASSET_LOADED, ptfxAssetName)){
+            bool loaded = NativeFunction.Natives.x8702416E512EC454<bool>(ptfxAssetName);
+            if(/*NativeFunction.CallByHash<bool>((ulong)Hashes.HAS_NAMED_PTFX_ASSET_LOADED, ptfxAssetName*/
+                loaded){
                 return true;
             }
             return false;
         }
 
-
+        /// <summary>Stops the particle from looping.</summary>
+        /// <exception cref="ParticleLibrary.Exceptions.ParticleNotLoopedException">Thrown when the particle you spawn aren't looped.</exception>
         public void StopLooping()
         {
-            if (looped)
+            if (!looped)
             {
+                return;
+            }
 
-            }
-            else
-            {
-                throw new ParticleNotLoopedException();
-            }
+            //...
         }
-
-       
-    }
-
-    // Custom exceptions
-    
-    public class ParticleNotLoopedException : Exception
-    {
-        public ParticleNotLoopedException(){}
     }
 }
+
