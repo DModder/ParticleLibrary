@@ -91,30 +91,14 @@ namespace ParticleLibrary
         /// <param name="scale">Sets the size of the particle effect</param>
         public Particle(string ptfxAssetName, string ptfxParticleName, Ped character, float scale, Vector3 rotation, Vector3 offset)
         {
-            Game.Console.Print("Asset: -" + ptfxAssetName + "-");
-            Game.Console.Print("PTFX: -" + ptfxParticleName + "-");
-            //Setting up properties
-            
-
-            //Preparing the Asset...
+           //Preparing the Asset...
             if (!PreparingAsset(ptfxAssetName)) { return; }
 
             //Everything went OK. Procceding...
             //Set the PTFX asset to ready, and spawn the particle
             //NativeFunction.CallByHash((ulong)Hashes._SET_PTFX_ASSET_NEXT_CALL, null, ptfxAssetName);
             NativeFunction.Natives.x6C38AF3693A69A91(ptfxAssetName);
-            bool success = /*NativeFunction.CallByHash<bool>((ulong)Hashes.START_PARTICLE_FX_NON_LOOPED_ON_ENTITY, ptfxParticleName, Game.LocalPlayer.Character, offset.X, offset.Y, offset.Z, rotation.X, rotation.Y, rotation.Z, scale, false, false);*/
-                NativeFunction.Natives.x0D53A3B8DA0809D2<bool>(ptfxParticleName, Game.LocalPlayer.Character, offset.X, offset.Y, offset.Z, rotation.X, rotation.Y, rotation.Z, scale, false, false);
-
-            if (success)
-            {
-                Game.Console.Print("PL: Successfully spawned a particle effect.");
-            }
-            else
-            {
-                Game.Console.Print("PL: Something went wrong, particle effect not spawned.");
-            }
-
+            handle = NativeFunction.Natives.x1AE42C1660FD6517<uint>(ptfxParticleName, Game.LocalPlayer.Character, offset.X, offset.Y, offset.Z, rotation.X, rotation.Y, rotation.Z, scale, false, false, false);
         }
 
 
@@ -159,7 +143,7 @@ namespace ParticleLibrary
             //Set the PTFX asset to ready, and spawn the particle
             //NativeFunction.CallByHash((ulong)Hashes._SET_PTFX_ASSET_NEXT_CALL, null, ptfxAssetName);
             NativeFunction.Natives.x6C38AF3693A69A91(ptfxAssetName);
-            this.handle = NativeFunction.Natives.xE184F4F0DC5910E7<uint>(ptfxParticleName, position.X, position.Y, position.Z, rotation.X, rotation.Y, rotation.Z, scale, false, false, false);
+            this.handle = NativeFunction.Natives.xE184F4F0DC5910E7<uint>(ptfxParticleName, position.X, position.Y, position.Z, rotation.X, rotation.Y, rotation.Z, scale, false, false, false, false);
             
            
             
